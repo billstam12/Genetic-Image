@@ -1,6 +1,6 @@
 from deap import base, creator, tools, algorithms
 from random import randint, random, gauss
-from PIL import Image, ImageDraw, ImageTk
+from PIL import Image, ImageDraw, ImageTk, ImageGrab
 from functools import partial
 from math import sqrt
 import numpy as np
@@ -15,6 +15,16 @@ NGEN = 1000
 POLY = 3
 CXPB = 0.5
 MUTPB = 0.1
+
+def get_canvas_coordinates(cv):
+		
+        x = cv.winfo_rootx()+cv.winfo_x()
+        y = cv.winfo_rooty()+cv.winfo_y()
+        x1 = x + cv.winfo_width()
+        y1 = y + cv.winfo_height()
+        box = (x, y, x1, y1)
+        return box
+		
 def gen_one_triangle():
 	return (tuple ([(randint(0,SIZE), randint(0,SIZE)) for i in xrange(POLY)]),
 			randint(0,255), randint(0, 255), randint(0, 255), randint(0,30))
@@ -103,6 +113,13 @@ def main():
 	im = C.create_image(50,200, image = C.image1, anchor = "nw")
 	C.pack()
 	g = 0
+	C.gen_text = C.create_text(250, 50, text = "Generation " + str(0) ) 
+	C.min_text = C.create_text(250, 100, text = "  Min " + str(0))
+	C.max_text = C.create_text(250, 120, text = "  Max " + str(0))
+	C.mean_text = C.create_text(250, 140, text = "  Avg " + str(0))
+	C.std_text = C.create_text(250, 160, text = "  Std " + str(0))
+	
+
 	while g < NGEN:
 		g = g + 1
 		print("-- Generation %i --" % g)
@@ -137,16 +154,22 @@ def main():
 		sum2 = sum(x*x for x in fits)
 		std = abs(sum2 / length - mean**2)**0.5
         
-		print("  Min %s" % min(fits))
-		print("  Max %s" % max(fits))
-		print("  Avg %s" % mean)
-		print("  Std %s" % std)
+		#print("  Min %s" % min(fits))
+		#print("  Max %s" % max(fits))
+		#print("  Avg %s" % mean)
+		#print("  Std %s" % std)
 		#open('result.txt', 'w').write(repr(best))
-		triangles_to_image(best).save('generations/generation_' + str(g) + '.bmp')
+		#triangles_to_image(best).save('generations/generation_' + str(g) + '.bmp')
+		C.itemconfigure(C.gen_text, text = "Generation " + str(g)) 
+		C.itemconfigure(C.min_text, text = "  Max " + str(max(fits)))
+		C.itemconfigure(C.max_text, text = "  Min " + str(min(fits)))
+		C.itemconfigure(C.mean_text, text = "  Mean " + str(mean))
+		C.itemconfigure(C.std_text, text = "  Std " + str(std))
 		
 		C.image2 = ImageTk.PhotoImage(triangles_to_image(best))
 		im = C.create_image(350,200, image = C.image2, anchor = "nw")
-		
+		ImageGrab.grab(bbox = get_canvas_coordinates(C)).save("generations/generation_" + str(g) + ".bmp")
+        
 		C.update()
 
 		
@@ -167,17 +190,3 @@ if __name__ == '__main__':
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-toolbox.register("select", tools.selTournament, tournsize=3)
